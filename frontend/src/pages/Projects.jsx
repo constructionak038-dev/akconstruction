@@ -13,23 +13,30 @@ export default function Projects() {
     AOS.init({ duration: 800 });
   }, []);
 
-  // Fetch projects from backend
+  // ✅ Fetch projects (Auto switch between local & live backend)
   useEffect(() => {
+    const API_URL =
+      process.env.REACT_APP_API_URL || "http://localhost:5000";
+
     axios
-      .get("http://localhost:5000/api/projects")
+      .get(`${API_URL}/api/projects`)
       .then((res) => setProjects(res.data))
-      .catch(() => console.log("Error fetching projects"));
+      .catch((err) =>
+        console.error("❌ Error fetching projects:", err.message)
+      );
   }, []);
 
-  // Filter logic
+  // Filter projects based on category
   const filteredProjects =
     filter === "All"
       ? projects
-      : projects.filter((p) => p.category?.toLowerCase() === filter.toLowerCase());
+      : projects.filter(
+          (p) => p.category?.toLowerCase() === filter.toLowerCase()
+        );
 
   return (
     <div className="projects-page">
-      {/* Header */}
+      {/* Header Section */}
       <section
         className="text-white text-center d-flex align-items-center"
         style={{
@@ -42,18 +49,22 @@ export default function Projects() {
       >
         <div className="container">
           <h1 className="fw-bold text-warning">Our Projects</h1>
-          <p className="lead mt-2">Showcasing the Work That Builds Our Reputation</p>
+          <p className="lead mt-2">
+            Showcasing the Work That Builds Our Reputation
+          </p>
         </div>
       </section>
 
-      {/* Filters */}
+      {/* Filter Buttons */}
       <div className="container py-4 text-center">
         <div className="btn-group">
           {["All", "Completed", "Ongoing"].map((cat) => (
             <button
               key={cat}
               className={`btn ${
-                filter === cat ? "btn-warning text-white" : "btn-outline-warning"
+                filter === cat
+                  ? "btn-warning text-white"
+                  : "btn-outline-warning"
               } mx-1`}
               onClick={() => setFilter(cat)}
             >
@@ -69,7 +80,6 @@ export default function Projects() {
           {filteredProjects.length > 0 ? (
             filteredProjects.map((p, i) => (
               <div key={i} className="col-md-4 mb-4" data-aos="fade-up">
-                {/* ✅ Each project links to its details page */}
                 <Link
                   to={`/projects/${p._id}`}
                   className="text-decoration-none text-dark"
@@ -89,6 +99,7 @@ export default function Projects() {
                         transition: "transform 0.3s ease",
                       }}
                     />
+
                     <div
                       className="card-img-overlay d-flex align-items-end p-0"
                       style={{
@@ -123,9 +134,12 @@ export default function Projects() {
         }}
       >
         <div className="container">
-          <h3 className="fw-bold mb-3">Want Your Dream Project Built by Us?</h3>
+          <h3 className="fw-bold mb-3">
+            Want Your Dream Project Built by Us?
+          </h3>
           <p className="mb-4">
-            Whether it’s a home, commercial complex, or renovation — we’re ready to help.
+            Whether it’s a home, commercial complex, or renovation — we’re
+            ready to help.
           </p>
           <a href="/contact" className="btn btn-light fw-bold">
             Contact AK Construction

@@ -17,7 +17,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:3000", // local
-    "https://akconstruction-frontend.onrender.com" // your live frontend
+    "https://akconstruction.onrender.com",  // your live frontend
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,

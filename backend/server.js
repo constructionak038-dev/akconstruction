@@ -12,9 +12,20 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 dotenv.config();
 const app = express();
 
+
+// ✅ Allow all origins safely
+app.use(cors({
+  origin: [
+    "http://localhost:3000", // local
+    "https://akconstruction-frontend.onrender.com" // your live frontend
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+}));
+
 // ✅ CORS
-app.use(cors({ origin: "http://localhost:3000" }));
-app.use(express.json());
+// app.use(cors({ origin: "http://localhost:3000" }));
+// app.use(express.json());
 
 // ✅ Admin login
 app.post("/api/admin/login", (req, res) => {

@@ -7,8 +7,11 @@ export default function ProjectDetails() {
   const [project, setProject] = useState(null);
 
   useEffect(() => {
+
+    const API_URL =
+      process.env.REACT_APP_API_URL || "http://localhost:5000";
     axios
-      .get(`http://localhost:5000/api/projects/${id}`)
+      .get(`${API_URL}/api/projects/${id}`)
       .then((res) => setProject(res.data))
       .catch(() => console.log("Error loading project"));
   }, [id]);

@@ -8,8 +8,9 @@ import QuotationManager from "./QuotationManager";
 import EstimationManager from "./EstimationManager";
 import PaymentScheduleManager from "./PaymentScheduleManager";
 
-
-const ADMIN_KEY = "akconstruction@admin";
+// ✅ Use environment variables
+const ADMIN_KEY = process.env.REACT_APP_ADMIN_KEY;
+const API_URL = process.env.REACT_APP_API_URL;
 
 export default function AdminDashboard() {
   const [auth, setAuth] = useState(false);
@@ -36,21 +37,19 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const p = await axios.get("http://localhost:5000/api/projects");
-      const c = await axios.get("http://localhost:5000/api/contact/list");
+      const p = await axios.get(`${API_URL}/api/projects`);
+      const c = await axios.get(`${API_URL}/api/contact/list`);
       setProjects(p.data);
       setContacts(c.data);
-    } catch {
-      console.error("❌ Error fetching data");
+    } catch (err) {
+      console.error("❌ Error fetching data:", err.message);
     }
   };
 
   // 🔐 Login
   const handleLogin = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/api/admin/login", {
-        password,
-      });
+      const res = await axios.post(`${API_URL}/api/admin/login`, { password });
       if (res.data.success) {
         setAuth(true);
         localStorage.setItem("adminAuth", "true");
@@ -77,7 +76,7 @@ export default function AdminDashboard() {
       formData.append("category", newProject.category);
       newProject.images.forEach((img) => formData.append("images", img));
 
-      await axios.post("http://localhost:5000/api/projects", formData, {
+      await axios.post(`${API_URL}/api/projects`, formData, {
         headers: {
           Authorization: ADMIN_KEY,
           "Content-Type": "multipart/form-data",
@@ -95,7 +94,7 @@ export default function AdminDashboard() {
   // 🗑 Delete Project
   const deleteProject = async (id) => {
     if (!window.confirm("Delete project?")) return;
-    await axios.delete(`http://localhost:5000/api/projects/${id}`, {
+    await axios.delete(`${API_URL}/api/projects/${id}`, {
       headers: { Authorization: ADMIN_KEY },
     });
     fetchData();
@@ -104,11 +103,11 @@ export default function AdminDashboard() {
   // 📨 Delete Contact Message
   const deleteMessage = async (id) => {
     if (!window.confirm("Delete message?")) return;
-    await axios.delete(`http://localhost:5000/api/contact/${id}`);
+    await axios.delete(`${API_URL}/api/contact/${id}`);
     fetchData();
   };
 
-  // 🔒 If not logged in
+  // 🔒 Login Screen
   if (!auth)
     return (
       <div className="text-center py-5">
@@ -131,7 +130,6 @@ export default function AdminDashboard() {
       {/* Sidebar */}
       <Sidebar active={active} setActive={setActive} handleLogout={handleLogout} />
 
-      {/* Main content */}
       <div className="flex-grow-1 p-4">
         {active === "add" && (
           <AddProjectForm
@@ -159,7 +157,7 @@ export default function AdminDashboard() {
         {active === "payments" && <PaymentScheduleManager />}
       </div>
 
-      {/* ✅ Edit Project Modal */}
+      {/* Edit Project Modal */}
       {editProject && (
         <div
           className="modal show fade d-block"
@@ -194,7 +192,7 @@ export default function AdminDashboard() {
                       }
 
                       await axios.put(
-                        `http://localhost:5000/api/projects/${editProject._id}`,
+                        `${API_URL}/api/projects/${editProject._id}`,
                         formData,
                         {
                           headers: {
@@ -213,7 +211,6 @@ export default function AdminDashboard() {
                     }
                   }}
                 >
-                  {/* Inputs */}
                   <input
                     type="text"
                     className="form-control mb-3"
@@ -260,7 +257,7 @@ export default function AdminDashboard() {
                     }
                   />
 
-                  {/* Preview + Delete individual images */}
+                  {/* Preview Existing Images */}
                   {editProject.images?.length > 0 && (
                     <div className="d-flex flex-wrap mb-3">
                       {editProject.images.map((img, idx) => (
@@ -286,7 +283,7 @@ export default function AdminDashboard() {
                               if (!window.confirm("Delete this image?")) return;
                               try {
                                 await axios.delete(
-                                  `http://localhost:5000/api/projects/${editProject._id}/images/${idx}`,
+                                  `${API_URL}/api/projects/${editProject._id}/images/${idx}`,
                                   { headers: { Authorization: ADMIN_KEY } }
                                 );
                                 setEditProject((prev) => ({
@@ -313,60 +310,6 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                   )}
-
-                  {/* Footer Buttons */}
-                  <div className="text-end d-flex justify-content-between align-items-center mt-3">
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setEditProject(null)}
-                    >
-                      Cancel
-                    </button>
-
-                    <div>
-                      <button type="submit" className="btn btn-success me-2">
-                        Save Changes
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn btn-warning"
-                        onClick={async () => {
-                          if (!editProject.newImages?.length) {
-                            return alert("⚠️ Please select new images first!");
-                          }
-
-                          const formData = new FormData();
-                          editProject.newImages.forEach((img) =>
-                            formData.append("images", img)
-                          );
-
-                          try {
-                            await axios.post(
-                              `http://localhost:5000/api/projects/${editProject._id}/add-images`,
-                              formData,
-                              {
-                                headers: {
-                                  Authorization: ADMIN_KEY,
-                                  "Content-Type": "multipart/form-data",
-                                },
-                              }
-                            );
-
-                            alert("✅ Images added successfully!");
-                            setEditProject(null);
-                            fetchData();
-                          } catch (err) {
-                            console.error(err);
-                            alert("❌ Failed to add images");
-                          }
-                        }}
-                      >
-                        ➕ Add Images
-                      </button>
-                    </div>
-                  </div>
                 </form>
               </div>
             </div>

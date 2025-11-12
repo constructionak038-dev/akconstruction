@@ -4,6 +4,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function PaymentScheduleManager() {
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const [schedules, setSchedules] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
     projectTitle: "",
@@ -11,11 +13,7 @@ export default function PaymentScheduleManager() {
     items: [],
     totalAmount: "",
   });
-
-  const [item, setItem] = useState({
-    description: "",
-    amount: "",
-  });
+  const [item, setItem] = useState({ description: "", amount: "" });
 
   useEffect(() => {
     fetchSchedules();
@@ -23,32 +21,11 @@ export default function PaymentScheduleManager() {
 
   const fetchSchedules = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/payments");
+      const res = await axios.get(`${API_URL}/api/payments`);
       setSchedules(res.data);
     } catch (err) {
       console.error("Error loading payment schedules:", err);
     }
-  };
-
-  const addItem = () => {
-    if (!item.description || !item.amount) {
-      return alert("Please fill all fields!");
-    }
-
-    setNewSchedule({
-      ...newSchedule,
-      items: [...newSchedule.items, item],
-    });
-
-    setItem({ description: "", amount: "" });
-  };
-
-  const calculateTotal = () => {
-    const total = newSchedule.items.reduce(
-      (acc, curr) => acc + parseFloat(curr.amount || 0),
-      0
-    );
-    return total.toLocaleString("en-IN");
   };
 
   const saveSchedule = async () => {
@@ -57,7 +34,7 @@ export default function PaymentScheduleManager() {
         ...newSchedule,
         totalAmount: calculateTotal(),
       };
-      await axios.post("http://localhost:5000/api/payments", scheduleToSave);
+      await axios.post(`${API_URL}/api/payments`, scheduleToSave);
       alert("✅ Payment Schedule Saved!");
       setNewSchedule({
         projectTitle: "",
@@ -73,9 +50,10 @@ export default function PaymentScheduleManager() {
 
   const deleteSchedule = async (id) => {
     if (!window.confirm("Delete this payment schedule?")) return;
-    await axios.delete(`http://localhost:5000/api/payments/${id}`);
+    await axios.delete(`${API_URL}/api/payments/${id}`);
     fetchSchedules();
   };
+
 
   // 📄 Generate PDF
   const generatePDF = (s) => {

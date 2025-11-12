@@ -4,6 +4,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function EstimationManager() {
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const [estimations, setEstimations] = useState([]);
   const [newEstimation, setNewEstimation] = useState({
     projectTitle: "",
@@ -11,13 +13,7 @@ export default function EstimationManager() {
     sections: [],
     totalEstimate: "",
   });
-
-  const [section, setSection] = useState({
-    title: "",
-    note: "",
-    items: [],
-  });
-
+  const [section, setSection] = useState({ title: "", note: "", items: [] });
   const [item, setItem] = useState({
     description: "",
     rate: "",
@@ -33,34 +29,16 @@ export default function EstimationManager() {
 
   const fetchEstimations = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/estimations");
+      const res = await axios.get(`${API_URL}/api/estimations`);
       setEstimations(res.data);
     } catch (err) {
       console.error("Error loading estimations:", err);
     }
   };
 
-  const addItem = () => {
-    if (!item.description || !item.rate) return alert("Please fill item details!");
-    setSection({
-      ...section,
-      items: [...section.items, item],
-    });
-    setItem({ description: "", rate: "", qty: "", unit: "", amount: "", note: "" });
-  };
-
-  const addSection = () => {
-    if (!section.title) return alert("Please enter section title!");
-    setNewEstimation({
-      ...newEstimation,
-      sections: [...newEstimation.sections, section],
-    });
-    setSection({ title: "", note: "", items: [] });
-  };
-
   const saveEstimation = async () => {
     try {
-      await axios.post("http://localhost:5000/api/estimations", newEstimation);
+      await axios.post(`${API_URL}/api/estimations`, newEstimation);
       alert("✅ Estimation saved successfully!");
       setNewEstimation({
         projectTitle: "",
@@ -76,7 +54,7 @@ export default function EstimationManager() {
 
   const deleteEstimation = async (id) => {
     if (!window.confirm("Delete this estimation?")) return;
-    await axios.delete(`http://localhost:5000/api/estimations/${id}`);
+    await axios.delete(`${API_URL}/api/estimations/${id}`);
     fetchEstimations();
   };
 

@@ -4,6 +4,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function QuotationManager() {
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const [quotations, setQuotations] = useState([]);
   const [newQuotation, setNewQuotation] = useState({
     projectTitle: "",
@@ -28,7 +30,7 @@ export default function QuotationManager() {
 
   const fetchQuotations = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/quotations");
+      const res = await axios.get(`${API_URL}/api/quotations`);
       setQuotations(res.data);
     } catch (err) {
       console.error("Error loading quotations:", err);
@@ -46,7 +48,7 @@ export default function QuotationManager() {
 
   const saveQuotation = async () => {
     try {
-      await axios.post("http://localhost:5000/api/quotations", newQuotation);
+      await axios.post(`${API_URL}/api/quotations`, newQuotation);
       alert("✅ Quotation added successfully!");
       setNewQuotation({
         projectTitle: "",
@@ -65,7 +67,7 @@ export default function QuotationManager() {
 
   const deleteQuotation = async (id) => {
     if (!window.confirm("Delete this quotation?")) return;
-    await axios.delete(`http://localhost:5000/api/quotations/${id}`);
+    await axios.delete(`${API_URL}/api/quotations/${id}`);
     fetchQuotations();
   };
 

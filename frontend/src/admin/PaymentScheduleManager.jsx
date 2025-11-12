@@ -4,8 +4,6 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function PaymentScheduleManager() {
-  const API_URL = process.env.REACT_APP_API_URL;
-
   const [schedules, setSchedules] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
     projectTitle: "",
@@ -13,7 +11,11 @@ export default function PaymentScheduleManager() {
     items: [],
     totalAmount: "",
   });
-  const [item, setItem] = useState({ description: "", amount: "" });
+
+  const [item, setItem] = useState({
+    description: "",
+    amount: "",
+  });
 
   useEffect(() => {
     fetchSchedules();
@@ -21,11 +23,32 @@ export default function PaymentScheduleManager() {
 
   const fetchSchedules = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/payments`);
+      const res = await axios.get("http://localhost:5000/api/payments");
       setSchedules(res.data);
     } catch (err) {
       console.error("Error loading payment schedules:", err);
     }
+  };
+
+  const addItem = () => {
+    if (!item.description || !item.amount) {
+      return alert("Please fill all fields!");
+    }
+
+    setNewSchedule({
+      ...newSchedule,
+      items: [...newSchedule.items, item],
+    });
+
+    setItem({ description: "", amount: "" });
+  };
+
+  const calculateTotal = () => {
+    const total = newSchedule.items.reduce(
+      (acc, curr) => acc + parseFloat(curr.amount || 0),
+      0
+    );
+    return total.toLocaleString("en-IN");
   };
 
   const saveSchedule = async () => {
@@ -34,7 +57,7 @@ export default function PaymentScheduleManager() {
         ...newSchedule,
         totalAmount: calculateTotal(),
       };
-      await axios.post(`${API_URL}/api/payments`, scheduleToSave);
+      await axios.post("http://localhost:5000/api/payments", scheduleToSave);
       alert("✅ Payment Schedule Saved!");
       setNewSchedule({
         projectTitle: "",
@@ -50,10 +73,9 @@ export default function PaymentScheduleManager() {
 
   const deleteSchedule = async (id) => {
     if (!window.confirm("Delete this payment schedule?")) return;
-    await axios.delete(`${API_URL}/api/payments/${id}`);
+    await axios.delete(`http://localhost:5000/api/payments/${id}`);
     fetchSchedules();
   };
-
 
   // 📄 Generate PDF
   const generatePDF = (s) => {
@@ -77,13 +99,11 @@ export default function PaymentScheduleManager() {
     doc.setFontSize(10);
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 450, 120);
 
-    // Project Info
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.text(`Project: ${s.projectTitle || "-"}`, 40, 150);
     doc.text(`Owner: ${s.ownerName || "-"}`, 40, 170);
 
-    // Table
     const rows = s.items.map((i, idx) => [
       idx + 1,
       i.description,
@@ -99,13 +119,11 @@ export default function PaymentScheduleManager() {
       headStyles: { fillColor: [255, 200, 0], textColor: 0 },
     });
 
-    // Total
     const finalY = doc.lastAutoTable.finalY + 25;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(`Total: Rs. ${s.totalAmount}`, 40, finalY);
 
-    // Footer
     doc.line(40, 760, 550, 760);
     doc.setFontSize(10);
     doc.text("For AK Construction", 400, 780);
@@ -119,7 +137,6 @@ export default function PaymentScheduleManager() {
     <div>
       <h3 className="text-warning mb-3">💰 Payment Schedule Management</h3>
 
-      {/* Form */}
       <div className="card p-3 mb-4 shadow-sm">
         <input
           className="form-control mb-2"
@@ -144,9 +161,7 @@ export default function PaymentScheduleManager() {
               className="form-control"
               placeholder="Description"
               value={item.description}
-              onChange={(e) =>
-                setItem({ ...item, description: e.target.value })
-              }
+              onChange={(e) => setItem({ ...item, description: e.target.value })}
             />
           </div>
           <div className="col-md-3">
@@ -194,7 +209,6 @@ export default function PaymentScheduleManager() {
         </div>
       </div>
 
-      {/* Saved Schedules */}
       <h5 className="mb-2">📑 Saved Payment Schedules</h5>
       {schedules.map((s) => (
         <div

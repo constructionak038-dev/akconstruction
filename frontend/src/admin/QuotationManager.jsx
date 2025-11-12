@@ -4,8 +4,6 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function QuotationManager() {
-  const API_URL = process.env.REACT_APP_API_URL;
-
   const [quotations, setQuotations] = useState([]);
   const [newQuotation, setNewQuotation] = useState({
     projectTitle: "",
@@ -30,7 +28,7 @@ export default function QuotationManager() {
 
   const fetchQuotations = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/quotations`);
+      const res = await axios.get("http://localhost:5000/api/quotations");
       setQuotations(res.data);
     } catch (err) {
       console.error("Error loading quotations:", err);
@@ -48,7 +46,7 @@ export default function QuotationManager() {
 
   const saveQuotation = async () => {
     try {
-      await axios.post(`${API_URL}/api/quotations`, newQuotation);
+      await axios.post("http://localhost:5000/api/quotations", newQuotation);
       alert("✅ Quotation added successfully!");
       setNewQuotation({
         projectTitle: "",
@@ -67,7 +65,7 @@ export default function QuotationManager() {
 
   const deleteQuotation = async (id) => {
     if (!window.confirm("Delete this quotation?")) return;
-    await axios.delete(`${API_URL}/api/quotations/${id}`);
+    await axios.delete(`http://localhost:5000/api/quotations/${id}`);
     fetchQuotations();
   };
 
@@ -75,7 +73,7 @@ export default function QuotationManager() {
   const generatePDF = (q) => {
     const doc = new jsPDF("p", "pt", "a4");
 
-    // 🏗️ Header
+    // Header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("AK CONSTRUCTION", 40, 40);
@@ -85,17 +83,13 @@ export default function QuotationManager() {
     doc.text("Email: arafatkazi094@gmail.com", 40, 90);
 
     doc.setDrawColor(255, 200, 0);
-    doc.setLineWidth(1);
     doc.line(40, 100, 550, 100);
 
-    doc.setFont("helvetica", "normal");
     doc.setFontSize(14);
     doc.text("QUOTATION", 250, 120);
     doc.setFontSize(10);
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 450, 120);
 
-    // 🧱 Project Info
-    doc.setFontSize(11);
     const details = [
       `Project: ${q.projectTitle || "-"}`,
       `Owner: ${q.ownerName || "-"}`,
@@ -109,7 +103,6 @@ export default function QuotationManager() {
       yPos += 20;
     });
 
-    // 🧮 Table
     const rows = q.items.map((i, index) => [
       index + 1,
       i.description.replace(/&/g, "and"),
@@ -124,35 +117,26 @@ export default function QuotationManager() {
       head: [["#", "Description", "Unit", "Area", "Rate", "Amount"]],
       body: rows,
       theme: "grid",
-      styles: { fontSize: 10, halign: "center", lineColor: [150, 150, 150] },
+      styles: { fontSize: 10, halign: "center" },
       headStyles: { fillColor: [255, 200, 0], textColor: 0 },
     });
 
-    // 💰 Total Amount
     const finalY = doc.lastAutoTable.finalY + 25;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(`Total Amount: Rs. ${q.totalAmount || "0"}`, 40, finalY); // ✅ changed ₹ → Rs.
+    doc.text(`Total Amount: Rs. ${q.totalAmount || "0"}`, 40, finalY);
 
-    // 📝 Notes Section
     const noteY = finalY + 30;
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
     doc.text("Note:", 40, noteY);
-    doc.setFontSize(10);
     doc.text(q.note?.replace(/&/g, "and") || "-", 70, noteY, {
       maxWidth: 460,
       align: "justify",
     });
 
-    // ✍️ Footer
-    doc.setDrawColor(0);
     doc.line(40, 760, 550, 760);
-    doc.setFontSize(10);
     doc.text("For AK Construction", 400, 780);
     doc.text("Authorized Signature", 400, 795);
 
-    // Save the PDF
     const safeTitle = q.projectTitle?.replace(/[^\w\s]/gi, "_") || "quotation";
     doc.save(`${safeTitle}_quotation.pdf`);
   };
@@ -296,7 +280,6 @@ export default function QuotationManager() {
           </table>
         )}
 
-        {/* Save Button */}
         <div className="text-end mt-3">
           <input
             placeholder="Total Amount"
@@ -345,4 +328,3 @@ export default function QuotationManager() {
     </div>
   );
 }
-

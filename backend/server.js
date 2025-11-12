@@ -23,6 +23,8 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(express.json());
+
 // ✅ CORS
 // app.use(cors({ origin: "http://localhost:3000" }));
 // app.use(express.json());

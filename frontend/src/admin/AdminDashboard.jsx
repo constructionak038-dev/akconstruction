@@ -8,9 +8,11 @@ import QuotationManager from "./QuotationManager";
 import EstimationManager from "./EstimationManager";
 import PaymentScheduleManager from "./PaymentScheduleManager";
 
-// ✅ Use environment variables
-const ADMIN_KEY = process.env.REACT_APP_ADMIN_KEY;
-const API_URL = process.env.REACT_APP_API_URL;
+const ADMIN_KEY = "akconstruction@admin";
+
+// ✅ Dynamic API URL for both Local and Render
+const API_URL =
+  process.env.REACT_APP_API_URL || "https://akconstruction-backend.onrender.com";
 
 export default function AdminDashboard() {
   const [auth, setAuth] = useState(false);
@@ -107,7 +109,7 @@ export default function AdminDashboard() {
     fetchData();
   };
 
-  // 🔒 Login Screen
+  // 🔒 Admin login screen
   if (!auth)
     return (
       <div className="text-center py-5">
@@ -125,9 +127,9 @@ export default function AdminDashboard() {
       </div>
     );
 
+  // 🧭 Dashboard UI
   return (
     <div className="d-flex">
-      {/* Sidebar */}
       <Sidebar active={active} setActive={setActive} handleLogout={handleLogout} />
 
       <div className="flex-grow-1 p-4">
@@ -157,7 +159,7 @@ export default function AdminDashboard() {
         {active === "payments" && <PaymentScheduleManager />}
       </div>
 
-      {/* Edit Project Modal */}
+      {/* 🧱 Edit Project Modal */}
       {editProject && (
         <div
           className="modal show fade d-block"
@@ -211,6 +213,7 @@ export default function AdminDashboard() {
                     }
                   }}
                 >
+                  {/* Inputs */}
                   <input
                     type="text"
                     className="form-control mb-3"
@@ -257,7 +260,7 @@ export default function AdminDashboard() {
                     }
                   />
 
-                  {/* Preview Existing Images */}
+                  {/* Preview existing images */}
                   {editProject.images?.length > 0 && (
                     <div className="d-flex flex-wrap mb-3">
                       {editProject.images.map((img, idx) => (
@@ -310,6 +313,59 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                   )}
+
+                  <div className="text-end d-flex justify-content-between align-items-center mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setEditProject(null)}
+                    >
+                      Cancel
+                    </button>
+
+                    <div>
+                      <button type="submit" className="btn btn-success me-2">
+                        Save Changes
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-warning"
+                        onClick={async () => {
+                          if (!editProject.newImages?.length) {
+                            return alert("⚠️ Please select new images first!");
+                          }
+
+                          const formData = new FormData();
+                          editProject.newImages.forEach((img) =>
+                            formData.append("images", img)
+                          );
+
+                          try {
+                            await axios.post(
+                              `${API_URL}/api/projects/${editProject._id}/add-images`,
+                              formData,
+                              {
+                                headers: {
+                                  Authorization: ADMIN_KEY,
+                                  "Content-Type": "multipart/form-data",
+                                },
+                              }
+                            );
+
+                            alert("✅ Images added successfully!");
+                            setEditProject(null);
+                            fetchData();
+                          } catch (err) {
+                            console.error(err);
+                            alert("❌ Failed to add images");
+                          }
+                        }}
+                      >
+                        ➕ Add Images
+                      </button>
+                    </div>
+                  </div>
                 </form>
               </div>
             </div>

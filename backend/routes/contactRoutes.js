@@ -1,27 +1,15 @@
 import express from "express";
-import { sendMessage } from "../controllers/contactController.js";
-import Contact from "../models/Contact.js";
+import { saveContact, listContacts, deleteContact } from "../controllers/contactController.js";
 
 const router = express.Router();
 
-router.post("/", sendMessage);
+// ✅ Save a new contact message
+router.post("/", saveContact);
 
-router.get("/list", async (req, res) => {
-  try {
-    const messages = await Contact.find().sort({ date: -1 });
-    res.json(messages);
-  } catch {
-    res.status(500).json({ message: "Error fetching messages" });
-  }
-});
+// ✅ List all contact messages (admin use)
+router.get("/list", listContacts);
 
-router.delete("/:id", async (req, res) => {
-  try {
-    await Contact.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted successfully" });
-  } catch {
-    res.status(500).json({ message: "Error deleting message" });
-  }
-});
+// ✅ Delete a message (admin use)
+router.delete("/:id", deleteContact);
 
 export default router;

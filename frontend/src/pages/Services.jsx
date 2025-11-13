@@ -21,7 +21,7 @@ export default function Services() {
       icon: <FaRulerCombined size={45} className="text-warning mb-3" />,
       title: "RCC Structural Design",
       desc: "Safe, efficient, and cost-effective structural designs following IS codes and modern engineering practices.",
-      img: "https://portfolio.cept.ac.in/assets/projects/visuals/2017/5020/visual_20171208193216_slide1.jpg",
+      img: "https://tse3.mm.bing.net/th/id/OIP.jQuBdWfWrGaoWTTVWsmZMQHaFj?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
     },
     {
       icon: <FaDraftingCompass size={45} className="text-warning mb-3" />,

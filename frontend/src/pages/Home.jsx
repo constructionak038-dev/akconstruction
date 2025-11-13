@@ -82,7 +82,7 @@ export default function Home() {
               {
                 title: "RCC Structural Design",
                 desc: "Modern, efficient, and safe RCC design practices.",
-                img: "https://portfolio.cept.ac.in/assets/projects/visuals/2017/5020/visual_20171208193216_slide1.jpg",
+                img: "https://tse3.mm.bing.net/th/id/OIP.jQuBdWfWrGaoWTTVWsmZMQHaFj?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
               },
               {
                 title: "Interior & Renovation",

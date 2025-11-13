@@ -3,6 +3,10 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// ✅ Dynamic API URL (works for local + Render)
+const API_URL =
+  process.env.REACT_APP_API_URL || "https://akconstruction-backend.onrender.com";
+
 export default function QuotationManager() {
   const [quotations, setQuotations] = useState([]);
   const [newQuotation, setNewQuotation] = useState({
@@ -26,17 +30,21 @@ export default function QuotationManager() {
     fetchQuotations();
   }, []);
 
+  // 🧠 Fetch quotations
   const fetchQuotations = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/quotations");
+      const res = await axios.get(`${API_URL}/api/quotations`);
       setQuotations(res.data);
     } catch (err) {
-      console.error("Error loading quotations:", err);
+      console.error("❌ Error loading quotations:", err);
+      alert("Failed to load quotations. Please try again later.");
     }
   };
 
+  // ➕ Add item to quotation
   const addItem = () => {
-    if (!item.description) return alert("Please fill item details!");
+    if (!item.description || !item.rate)
+      return alert("⚠️ Please fill item details!");
     setNewQuotation({
       ...newQuotation,
       items: [...newQuotation.items, item],
@@ -44,9 +52,10 @@ export default function QuotationManager() {
     setItem({ description: "", unit: "", area: "", rate: "", amount: "" });
   };
 
+  // 💾 Save quotation
   const saveQuotation = async () => {
     try {
-      await axios.post("http://localhost:5000/api/quotations", newQuotation);
+      await axios.post(`${API_URL}/api/quotations`, newQuotation);
       alert("✅ Quotation added successfully!");
       setNewQuotation({
         projectTitle: "",
@@ -58,15 +67,22 @@ export default function QuotationManager() {
         totalAmount: "",
       });
       fetchQuotations();
-    } catch {
-      alert("❌ Error saving quotation");
+    } catch (err) {
+      console.error("❌ Error saving quotation:", err);
+      alert("❌ Failed to save quotation");
     }
   };
 
+  // 🗑 Delete quotation
   const deleteQuotation = async (id) => {
-    if (!window.confirm("Delete this quotation?")) return;
-    await axios.delete(`http://localhost:5000/api/quotations/${id}`);
-    fetchQuotations();
+    if (!window.confirm("🗑️ Delete this quotation?")) return;
+    try {
+      await axios.delete(`${API_URL}/api/quotations/${id}`);
+      fetchQuotations();
+    } catch (err) {
+      console.error("❌ Error deleting quotation:", err);
+      alert("Failed to delete quotation");
+    }
   };
 
   // 🧾 Generate PDF
@@ -90,6 +106,7 @@ export default function QuotationManager() {
     doc.setFontSize(10);
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 450, 120);
 
+    // Details
     const details = [
       `Project: ${q.projectTitle || "-"}`,
       `Owner: ${q.ownerName || "-"}`,
@@ -103,13 +120,14 @@ export default function QuotationManager() {
       yPos += 20;
     });
 
+    // Items Table
     const rows = q.items.map((i, index) => [
       index + 1,
-      i.description.replace(/&/g, "and"),
-      i.unit,
-      i.area,
-      i.rate,
-      i.amount,
+      i.description?.replace(/&/g, "and") || "-",
+      i.unit || "-",
+      i.area || "-",
+      i.rate || "-",
+      i.amount || "-",
     ]);
 
     autoTable(doc, {
@@ -133,6 +151,7 @@ export default function QuotationManager() {
       align: "justify",
     });
 
+    // Footer
     doc.line(40, 760, 550, 760);
     doc.text("For AK Construction", 400, 780);
     doc.text("Authorized Signature", 400, 795);
@@ -298,7 +317,7 @@ export default function QuotationManager() {
         </div>
       </div>
 
-      {/* Quotation List */}
+      {/* Saved Quotations */}
       <h5 className="mb-2">📜 Saved Quotations</h5>
       {quotations.map((q) => (
         <div

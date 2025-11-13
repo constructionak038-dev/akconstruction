@@ -3,6 +3,10 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// ✅ Dynamic API URL
+const API_URL =
+  process.env.REACT_APP_API_URL || "https://akconstruction-backend.onrender.com";
+
 export default function PaymentScheduleManager() {
   const [schedules, setSchedules] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
@@ -23,10 +27,11 @@ export default function PaymentScheduleManager() {
 
   const fetchSchedules = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/payments");
+      const res = await axios.get(`${API_URL}/api/payments`);
       setSchedules(res.data);
     } catch (err) {
       console.error("Error loading payment schedules:", err);
+      alert("❌ Failed to load payments");
     }
   };
 
@@ -57,27 +62,37 @@ export default function PaymentScheduleManager() {
         ...newSchedule,
         totalAmount: calculateTotal(),
       };
-      await axios.post("http://localhost:5000/api/payments", scheduleToSave);
+
+      await axios.post(`${API_URL}/api/payments`, scheduleToSave);
       alert("✅ Payment Schedule Saved!");
+
       setNewSchedule({
         projectTitle: "",
         ownerName: "",
         items: [],
         totalAmount: "",
       });
+
       fetchSchedules();
-    } catch {
+    } catch (err) {
+      console.error("Error saving schedule:", err);
       alert("❌ Error saving payment schedule");
     }
   };
 
   const deleteSchedule = async (id) => {
     if (!window.confirm("Delete this payment schedule?")) return;
-    await axios.delete(`http://localhost:5000/api/payments/${id}`);
-    fetchSchedules();
+
+    try {
+      await axios.delete(`${API_URL}/api/payments/${id}`);
+      fetchSchedules();
+    } catch (err) {
+      console.error("Error deleting schedule:", err);
+      alert("❌ Failed to delete schedule");
+    }
   };
 
-  // 📄 Generate PDF
+  // 📄 PDF Generator
   const generatePDF = (s) => {
     const doc = new jsPDF("p", "pt", "a4");
 
@@ -91,7 +106,6 @@ export default function PaymentScheduleManager() {
     doc.text("Email: arafatkazi094@gmail.com", 40, 90);
 
     doc.setDrawColor(255, 200, 0);
-    doc.setLineWidth(1);
     doc.line(40, 100, 550, 100);
 
     doc.setFontSize(14);
@@ -99,6 +113,7 @@ export default function PaymentScheduleManager() {
     doc.setFontSize(10);
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 450, 120);
 
+    // Body
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.text(`Project: ${s.projectTitle || "-"}`, 40, 150);
@@ -120,16 +135,20 @@ export default function PaymentScheduleManager() {
     });
 
     const finalY = doc.lastAutoTable.finalY + 25;
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(`Total: Rs. ${s.totalAmount}`, 40, finalY);
 
+    // Footer
     doc.line(40, 760, 550, 760);
     doc.setFontSize(10);
     doc.text("For AK Construction", 400, 780);
     doc.text("Authorized Signature", 400, 795);
 
-    const safeTitle = s.projectTitle?.replace(/[^\w\s]/gi, "_") || "payment_schedule";
+    const safeTitle =
+      s.projectTitle?.replace(/[^\w\s]/gi, "_") || "payment_schedule";
+
     doc.save(`${safeTitle}_Payment_Schedule.pdf`);
   };
 
@@ -146,6 +165,7 @@ export default function PaymentScheduleManager() {
             setNewSchedule({ ...newSchedule, projectTitle: e.target.value })
           }
         />
+
         <input
           className="form-control mb-2"
           placeholder="Owner Name"
@@ -161,9 +181,12 @@ export default function PaymentScheduleManager() {
               className="form-control"
               placeholder="Description"
               value={item.description}
-              onChange={(e) => setItem({ ...item, description: e.target.value })}
+              onChange={(e) =>
+                setItem({ ...item, description: e.target.value })
+              }
             />
           </div>
+
           <div className="col-md-3">
             <input
               type="number"
@@ -173,6 +196,7 @@ export default function PaymentScheduleManager() {
               onChange={(e) => setItem({ ...item, amount: e.target.value })}
             />
           </div>
+
           <div className="col-md-1">
             <button onClick={addItem} className="btn btn-success w-100">
               ➕
@@ -210,6 +234,7 @@ export default function PaymentScheduleManager() {
       </div>
 
       <h5 className="mb-2">📑 Saved Payment Schedules</h5>
+
       {schedules.map((s) => (
         <div
           key={s._id}
@@ -226,6 +251,7 @@ export default function PaymentScheduleManager() {
             >
               📄 Download PDF
             </button>
+
             <button
               className="btn btn-sm btn-danger"
               onClick={() => deleteSchedule(s._id)}

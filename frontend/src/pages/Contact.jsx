@@ -61,7 +61,7 @@ export default function Contact() {
             </div>
             <div className="d-flex align-items-center mb-3">
               <FaEnvelope className="text-warning me-3 fs-4" />
-              <span>akconstruction.ce@gmail.com</span>
+              <span>arafatkazi094@gmail.com</span>
             </div>
 
             {/* WhatsApp Button */}

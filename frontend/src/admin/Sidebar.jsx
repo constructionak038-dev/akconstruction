@@ -8,6 +8,8 @@ export default function Sidebar({ active, setActive, handleLogout }) {
     { name: "Quotations", key: "quotations" }, // ✅ Added Quotation tab
     { name: "Estimations", key: "estimations" },
     { name: "Payment Schedule", key: "payments" },
+    { name: "New Construction / Planning", key: "planning" }
+
   ];
 
   return (

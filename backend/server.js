@@ -56,6 +56,8 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/quotations", quotationRoutes);
 app.use("/api/estimations", estimationRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/planning", require("./routes/planningRoutes"));
+
 
 
 // ✅ Root route

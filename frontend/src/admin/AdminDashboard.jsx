@@ -7,6 +7,7 @@ import ContactsManager from "./ContactsManager";
 import QuotationManager from "./QuotationManager";
 import EstimationManager from "./EstimationManager";
 import PaymentScheduleManager from "./PaymentScheduleManager";
+import PlanningManager from "./PlanningManager";
 
 const ADMIN_KEY = "akconstruction@admin";
 
@@ -157,6 +158,9 @@ export default function AdminDashboard() {
         {active === "quotations" && <QuotationManager />}
         {active === "estimations" && <EstimationManager />}
         {active === "payments" && <PaymentScheduleManager />}
+        {active === "planning" && <PlanningManager />}
+
+
       </div>
 
       {/* 🧱 Edit Project Modal */}

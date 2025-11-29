@@ -7,6 +7,8 @@ import contactRoutes from "./routes/contactRoutes.js";
 import quotationRoutes from "./routes/quotationRoutes.js";
 import estimationRoutes from "./routes/estimationRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import planningRoutes from "./routes/planningRoutes.js";
+
 
 
 dotenv.config();
@@ -56,7 +58,8 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/quotations", quotationRoutes);
 app.use("/api/estimations", estimationRoutes);
 app.use("/api/payments", paymentRoutes);
-app.use("/api/planning", require("./routes/planningRoutes"));
+app.use("/api/planning", planningRoutes);
+
 
 
 

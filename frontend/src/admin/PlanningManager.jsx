@@ -8,20 +8,26 @@ const API_URL =
   "https://akconstruction-backend.onrender.com";
 
 export default function PlanningManager() {
-  const [planning, setPlanning] = useState({
+  const [planningList, setPlanningList] = useState([]);
+  const [newPlanning, setNewPlanning] = useState({
     projectType: "",
     floors: "",
     ownerName: "",
     engineerName: "",
+    sections: [],
+  });
+
+  const [section, setSection] = useState({
+    title: "",
+    note: "",
     items: [],
   });
 
-  const [newItem, setNewItem] = useState({
-    title: "",
+  const [item, setItem] = useState({
     description: "",
   });
 
-  // Load planning data
+  // ▶ Load all planning entries
   useEffect(() => {
     fetchPlanning();
   }, []);
@@ -29,207 +35,279 @@ export default function PlanningManager() {
   const fetchPlanning = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/planning`);
-      if (res.data) setPlanning(res.data);
+      setPlanningList(res.data);
     } catch (err) {
-      alert("Failed to load planning data");
+      alert("Failed to fetch planning");
     }
   };
 
-  // Save Project Info
-  const saveProjectInfo = async () => {
+  // ▶ Add item inside section
+  const addItem = () => {
+    if (!item.description) return alert("⚠️ Enter item description");
+
+    setSection({
+      ...section,
+      items: [...section.items, item],
+    });
+
+    setItem({ description: "" });
+  };
+
+  // ▶ Add section inside planning
+  const addSection = () => {
+    if (!section.title) return alert("⚠️ Enter section title");
+
+    setNewPlanning({
+      ...newPlanning,
+      sections: [...newPlanning.sections, section],
+    });
+
+    setSection({ title: "", note: "", items: [] });
+  };
+
+  // ▶ Save full planning entry
+  const savePlanning = async () => {
+    if (!newPlanning.projectType || !newPlanning.ownerName)
+      return alert("⚠️ Project type & owner required");
+
     try {
-      const res = await axios.post(`${API_URL}/api/planning/info`, {
-        projectType: planning.projectType,
-        floors: planning.floors,
-        ownerName: planning.ownerName,
-        engineerName: planning.engineerName,
+      await axios.post(`${API_URL}/api/planning`, newPlanning);
+
+      alert("✅ Planning saved successfully!");
+
+      setNewPlanning({
+        projectType: "",
+        floors: "",
+        ownerName: "",
+        engineerName: "",
+        sections: [],
       });
-      setPlanning(res.data);
-      alert("Project info saved!");
-    } catch (err) {
-      alert("Failed to save project info");
-    }
-  };
 
-  // Add item
-  const savePlanningItem = async () => {
-    if (!newItem.title || !newItem.description)
-      return alert("Please fill all fields!");
-
-    try {
-      const res = await axios.post(`${API_URL}/api/planning/item`, newItem);
-      setPlanning(res.data);
-      setNewItem({ title: "", description: "" });
-    } catch (err) {
-      alert("Failed to save item");
-    }
-  };
-
-  // Delete item by index
-  const deleteItem = async (index) => {
-    if (!window.confirm("Delete this item?")) return;
-
-    try {
-      await axios.delete(`${API_URL}/api/planning/item/${index}`);
       fetchPlanning();
     } catch (err) {
-      alert("Failed to delete item");
+      alert("❌ Failed to save planning");
     }
   };
 
-  // ⭐ PDF Generator
-  const generatePDF = () => {
-    const { projectType, floors, ownerName, engineerName, items } = planning;
+  // ▶ Delete planning entry
+  const deletePlanning = async (id) => {
+    if (!window.confirm("Delete this planning entry?")) return;
 
+    try {
+      await axios.delete(`${API_URL}/api/planning/${id}`);
+      fetchPlanning();
+    } catch {
+      alert("Failed to delete");
+    }
+  };
+
+  // ▶ PDF Generator
+  const generatePDF = (plan) => {
     const doc = new jsPDF("p", "pt", "a4");
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.text("AK CONSTRUCTION", 40, 40);
 
     doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
     doc.text("At Post Panderi, Tal: Mandangad, Dist: Ratnagiri", 40, 60);
     doc.text("Mob: 7276102921", 40, 75);
     doc.text("Email: arafatkazi094@gmail.com", 40, 90);
 
     doc.setDrawColor(255, 200, 0);
-    doc.setLineWidth(1.2);
-    doc.line(40, 105, 550, 105);
+    doc.line(40, 100, 550, 100);
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("CONSTRUCTION PLANNING", 170, 130);
-
-    let y = 160;
-    doc.setFontSize(12);
-    doc.text("Project Information", 40, y);
-    y += 20;
+    doc.setFontSize(14);
+    doc.text("CONSTRUCTION PLANNING", 200, 120);
 
     doc.setFontSize(11);
-    doc.text(`Project Type: ${projectType}`, 40, y); y += 20;
-    doc.text(`Floors: ${floors}`, 40, y); y += 20;
-    doc.text(`Owner Name: ${ownerName}`, 40, y); y += 20;
-    doc.text(`Engineer / Contractor: ${engineerName}`, 40, y);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 450, 120);
+
+    let y = 150;
+
+    doc.text(`Project Type: ${plan.projectType}`, 40, y); y += 20;
+    doc.text(`Floors: ${plan.floors}`, 40, y); y += 20;
+    doc.text(`Owner: ${plan.ownerName}`, 40, y); y += 20;
+    doc.text(`Engineer/Contractor: ${plan.engineerName}`, 40, y);
     y += 30;
 
-    const rows = items.map((i, index) => [
-      index + 1,
-      i.title,
-      i.description,
-    ]);
+    plan.sections.forEach((sec, sIdx) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(`${sIdx + 1}] ${sec.title}`, 40, y);
+      y += 10;
 
-    autoTable(doc, {
-      startY: y,
-      head: [["#", "Title", "Description"]],
-      body: rows,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [255, 200, 0], textColor: 0 },
+      const rows = sec.items.map((i, index) => [
+        index + 1,
+        i.description,
+      ]);
+
+      autoTable(doc, {
+        startY: y + 10,
+        head: [["#", "Description"]],
+        body: rows,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [255, 200, 0], textColor: 0 },
+      });
+
+      y = doc.lastAutoTable.finalY + 20;
+      if (sec.note) {
+        doc.setFont("helvetica", "italic");
+        doc.text(`Note: ${sec.note}`, 40, y);
+        y += 20;
+      }
     });
 
-    const safe = projectType.replace(/[^\w\s]/gi, "_") || "planning";
-    doc.save(`${safe}_planning.pdf`);
+    doc.save(`${plan.projectType.replace(/\s+/g, "_")}_planning.pdf`);
   };
 
   return (
-    <div className="p-3">
-      <h3 className="text-warning fw-bold mb-3">🏗 New Construction / Planning</h3>
+    <div>
+      <h3 className="text-warning mb-3">🏗 Planning Management</h3>
 
-      {/* PROJECT INFO */}
+      {/* ➕ Planning Form */}
       <div className="card p-3 mb-4 shadow-sm">
-        <h5 className="fw-bold">Project Information</h5>
-
-        <input className="form-control my-2" placeholder="Project Type"
-          value={planning.projectType}
-          onChange={(e) => setPlanning({ ...planning, projectType: e.target.value })}
+        <input
+          className="form-control mb-2"
+          placeholder="Project Type"
+          value={newPlanning.projectType}
+          onChange={(e) =>
+            setNewPlanning({ ...newPlanning, projectType: e.target.value })
+          }
         />
 
-        <input className="form-control my-2" placeholder="Floors"
-          value={planning.floors}
-          onChange={(e) => setPlanning({ ...planning, floors: e.target.value })}
+        <input
+          className="form-control mb-2"
+          placeholder="Floors (e.g., G+1)"
+          value={newPlanning.floors}
+          onChange={(e) =>
+            setNewPlanning({ ...newPlanning, floors: e.target.value })
+          }
         />
 
-        <input className="form-control my-2" placeholder="Owner Name"
-          value={planning.ownerName}
-          onChange={(e) => setPlanning({ ...planning, ownerName: e.target.value })}
+        <input
+          className="form-control mb-2"
+          placeholder="Owner Name"
+          value={newPlanning.ownerName}
+          onChange={(e) =>
+            setNewPlanning({ ...newPlanning, ownerName: e.target.value })
+          }
         />
 
-        <input className="form-control my-2" placeholder="Engineer / Contractor"
-          value={planning.engineerName}
-          onChange={(e) => setPlanning({ ...planning, engineerName: e.target.value })}
+        <input
+          className="form-control mb-2"
+          placeholder="Engineer / Contractor"
+          value={newPlanning.engineerName}
+          onChange={(e) =>
+            setNewPlanning({ ...newPlanning, engineerName: e.target.value })
+          }
         />
 
-        <button className="btn btn-warning mt-2" onClick={saveProjectInfo}>
-          Save Project Info
-        </button>
+        <hr />
+
+        {/* ➕ Add Section */}
+        <h6 className="fw-bold">Add Section</h6>
+        <input
+          className="form-control mb-2"
+          placeholder="Section Title"
+          value={section.title}
+          onChange={(e) => setSection({ ...section, title: e.target.value })}
+        />
+
+        <input
+          className="form-control mb-2"
+          placeholder="Section Note"
+          value={section.note}
+          onChange={(e) => setSection({ ...section, note: e.target.value })}
+        />
+
+        {/* ➕ Add Item */}
+        <h6 className="fw-bold mt-3">Add Item</h6>
+        <div className="row g-2">
+          <div className="col-md-10">
+            <input
+              className="form-control"
+              placeholder="Description"
+              value={item.description}
+              onChange={(e) =>
+                setItem({ ...item, description: e.target.value })
+              }
+            />
+          </div>
+          <div className="col-md-2">
+            <button className="btn btn-sm btn-success w-100" onClick={addItem}>
+              ➕ Add Item
+            </button>
+          </div>
+        </div>
+
+        {/* Items Table */}
+        {section.items.length > 0 && (
+          <table className="table table-sm mt-3">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {section.items.map((it, i) => (
+                <tr key={i}>
+                  <td>{i + 1}</td>
+                  <td>{it.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <div className="text-end">
+          <button className="btn btn-warning" onClick={addSection}>
+            Save Section
+          </button>
+        </div>
+
+        {/* Show saved sections */}
+        {newPlanning.sections.length > 0 && (
+          <div className="mt-3">
+            <h6>📋 Sections Added:</h6>
+            {newPlanning.sections.map((s, i) => (
+              <p key={i}>{i + 1}. {s.title} ({s.items.length} items)</p>
+            ))}
+          </div>
+        )}
+
+        <div className="text-end mt-3">
+          <button className="btn btn-warning" onClick={savePlanning}>
+            Save Planning
+          </button>
+        </div>
       </div>
 
-      {/* ADD NEW ITEM */}
-      <div className="card p-3 mb-4 shadow-sm">
-        <h5 className="fw-bold">Add New Planning Item</h5>
-
-        <input className="form-control my-2" placeholder="Title"
-          value={newItem.title}
-          onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-        />
-
-        <textarea className="form-control my-2" rows={3}
-          placeholder="Description"
-          value={newItem.description}
-          onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-        />
-
-        <button className="btn btn-warning" onClick={savePlanningItem}>
-          Save Item
-        </button>
-      </div>
-
-      {/* SAVED PLANNING CARD (Like Payment Schedule UI) */}
-      <h5 className="fw-bold mb-2">📘 Saved Construction Planning</h5>
-
-      {planning.items.length > 0 ? (
-        <div className="border rounded p-3 mb-3 bg-light shadow-sm">
-          <h6 className="fw-bold mb-1">{planning.projectType}</h6>
-          <p className="mb-1">Owner: {planning.ownerName}</p>
-          <p className="mb-1">Floors: {planning.floors}</p>
+      {/* Saved Planning List */}
+      <h5 className="mb-2">📑 Saved Planning</h5>
+      {planningList.map((plan) => (
+        <div
+          key={plan._id}
+          className="border rounded p-3 mb-3 bg-light shadow-sm"
+        >
+          <h6 className="fw-bold mb-1">{plan.projectType}</h6>
+          <p className="mb-1">Owner: {plan.ownerName}</p>
+          <p className="mb-1">Floors: {plan.floors}</p>
 
           <div className="d-flex gap-2 mt-2">
-            <button className="btn btn-sm btn-success" onClick={generatePDF}>
+            <button
+              className="btn btn-sm btn-success"
+              onClick={() => generatePDF(plan)}
+            >
               📄 Download PDF
             </button>
-
             <button
               className="btn btn-sm btn-danger"
-              onClick={() => {
-                if (window.confirm("Delete entire planning?")) {
-                  axios.delete(`${API_URL}/api/planning`).then(() => {
-                    setPlanning({
-                      projectType: "",
-                      floors: "",
-                      ownerName: "",
-                      engineerName: "",
-                      items: [],
-                    });
-                  });
-                }
-              }}
+              onClick={() => deletePlanning(plan._id)}
             >
               🗑 Delete
             </button>
           </div>
-        </div>
-      ) : (
-        <p className="text-muted">No planning saved yet.</p>
-      )}
-
-      {/* INDIVIDUAL ITEMS LIST */}
-      {planning.items.map((item, index) => (
-        <div key={index} className="card p-3 mb-2 shadow-sm">
-          <h6 className="fw-bold">{item.title}</h6>
-          <p>{item.description}</p>
-          <button className="btn btn-danger btn-sm" onClick={() => deleteItem(index)}>
-            Delete Item
-          </button>
         </div>
       ))}
     </div>

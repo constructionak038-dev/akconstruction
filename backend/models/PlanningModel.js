@@ -1,8 +1,13 @@
 import mongoose from "mongoose";
 
-const planningItemSchema = new mongoose.Schema({
-  title: String,
+const itemSchema = new mongoose.Schema({
   description: String,
+});
+
+const sectionSchema = new mongoose.Schema({
+  title: String,
+  note: String,
+  items: [itemSchema],
 });
 
 const planningSchema = new mongoose.Schema(
@@ -11,7 +16,7 @@ const planningSchema = new mongoose.Schema(
     floors: String,
     ownerName: String,
     engineerName: String,
-    items: [planningItemSchema],
+    sections: [sectionSchema],
   },
   { timestamps: true }
 );

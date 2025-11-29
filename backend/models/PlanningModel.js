@@ -7,12 +7,11 @@ const planningItemSchema = new mongoose.Schema({
 
 const planningSchema = new mongoose.Schema(
   {
-    projectType: String,      // Residential Building Project
-    floors: String,           // G+1
-    ownerName: String,        // MD Husain
-    engineerName: String,     // Arfat Kazi
-
-    items: [planningItemSchema], // RCC Work, Kitchen, etc…
+    projectType: String,
+    floors: String,
+    ownerName: String,
+    engineerName: String,
+    items: [planningItemSchema],
   },
   { timestamps: true }
 );

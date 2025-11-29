@@ -3,7 +3,7 @@ import Planning from "../models/PlanningModel.js";
 
 const router = express.Router();
 
-// GET planning document (only one)
+// GET planning (single document)
 router.get("/", async (req, res) => {
   try {
     const data = await Planning.findOne();
@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// SAVE/UPDATE project info
+// SAVE / UPDATE project info
 router.post("/info", async (req, res) => {
   try {
     let data = await Planning.findOne();
@@ -31,13 +31,13 @@ router.post("/info", async (req, res) => {
   }
 });
 
-// ADD planning item
+// ADD item
 router.post("/item", async (req, res) => {
   try {
     let data = await Planning.findOne();
     if (!data) data = new Planning();
 
-    data.items.push(req.body); // title + description
+    data.items.push(req.body);
     await data.save();
 
     res.json(data);
@@ -46,7 +46,7 @@ router.post("/item", async (req, res) => {
   }
 });
 
-// DELETE planning item
+// DELETE item by index
 router.delete("/item/:index", async (req, res) => {
   try {
     const data = await Planning.findOne();

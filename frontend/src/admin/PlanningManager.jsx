@@ -29,9 +29,7 @@ export default function PlanningManager() {
   const fetchPlanning = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/planning`);
-      if (res.data) {
-        setPlanning(res.data);
-      }
+      if (res.data) setPlanning(res.data);
     } catch (err) {
       alert("Failed to load planning data");
     }
@@ -46,7 +44,6 @@ export default function PlanningManager() {
         ownerName: planning.ownerName,
         engineerName: planning.engineerName,
       });
-
       setPlanning(res.data);
       alert("Project info saved!");
     } catch (err) {
@@ -54,10 +51,10 @@ export default function PlanningManager() {
     }
   };
 
-  // Save Planning Item
+  // Add item
   const savePlanningItem = async () => {
     if (!newItem.title || !newItem.description)
-      return alert("Please fill all fields");
+      return alert("Please fill all fields!");
 
     try {
       const res = await axios.post(`${API_URL}/api/planning/item`, newItem);
@@ -68,9 +65,9 @@ export default function PlanningManager() {
     }
   };
 
-  // Delete Item
+  // Delete item by index
   const deleteItem = async (index) => {
-    if (!window.confirm("Delete this entry?")) return;
+    if (!window.confirm("Delete this item?")) return;
 
     try {
       await axios.delete(`${API_URL}/api/planning/item/${index}`);
@@ -80,13 +77,12 @@ export default function PlanningManager() {
     }
   };
 
-  // ⭐ Generate PDF
+  // ⭐ PDF Generator
   const generatePDF = () => {
     const { projectType, floors, ownerName, engineerName, items } = planning;
 
     const doc = new jsPDF("p", "pt", "a4");
 
-    // Header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.text("AK CONSTRUCTION", 40, 40);
@@ -98,34 +94,27 @@ export default function PlanningManager() {
     doc.text("Email: arafatkazi094@gmail.com", 40, 90);
 
     doc.setDrawColor(255, 200, 0);
-    doc.setLineWidth(1.5);
+    doc.setLineWidth(1.2);
     doc.line(40, 105, 550, 105);
 
-    // Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("CONSTRUCTION PLANNING", 170, 130);
 
-    doc.setFontSize(10);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 450, 130);
-
     let y = 160;
-
-    // Project Info
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("Project Information", 40, y);
     y += 20;
 
-    doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Project Type: ${projectType || "-"}`, 40, y); y += 20;
-    doc.text(`Floors: ${floors || "-"}`, 40, y); y += 20;
-    doc.text(`Owner Name: ${ownerName || "-"}`, 40, y); y += 20;
-    doc.text(`Engineer / Contractor: ${engineerName || "-"}`, 40, y);
+    doc.setFontSize(11);
+    doc.text(`Project Type: ${projectType}`, 40, y); y += 20;
+    doc.text(`Floors: ${floors}`, 40, y); y += 20;
+    doc.text(`Owner Name: ${ownerName}`, 40, y); y += 20;
+    doc.text(`Engineer / Contractor: ${engineerName}`, 40, y);
     y += 30;
 
-    // Table Data
     const rows = items.map((i, index) => [
       index + 1,
       i.title,
@@ -138,60 +127,46 @@ export default function PlanningManager() {
       body: rows,
       styles: { fontSize: 10 },
       headStyles: { fillColor: [255, 200, 0], textColor: 0 },
-      columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 150 },
-        2: { cellWidth: 320 },
-      },
     });
 
-    const safeName =
-      projectType?.replace(/[^\w\s]/gi, "_") || "construction_planning";
-
-    doc.save(`${safeName}_planning.pdf`);
+    const safe = projectType.replace(/[^\w\s]/gi, "_") || "planning";
+    doc.save(`${safe}_planning.pdf`);
   };
 
   return (
     <div className="p-3">
       <h3 className="text-warning fw-bold mb-3">🏗 New Construction / Planning</h3>
 
-      {/* PDF Button */}
-      <button className="btn btn-success mb-3" onClick={generatePDF}>
-        📄 Download Planning PDF
-      </button>
+      {planning.items.length > 0 && (
+        <div className="mb-3">
+          <button className="btn btn-success" onClick={generatePDF}>
+            📄 Download Planning PDF
+          </button>
+        </div>
+      )}
 
-      {/* Project Info Section */}
+      {/* Project Info */}
       <div className="card p-3 mb-4 shadow-sm">
         <h5 className="fw-bold">Project Information</h5>
 
-        <input
-          className="form-control my-2"
-          placeholder="Project Type"
+        <input className="form-control my-2" placeholder="Project Type"
           value={planning.projectType}
           onChange={(e) => setPlanning({ ...planning, projectType: e.target.value })}
         />
 
-        <input
-          className="form-control my-2"
-          placeholder="Floors (e.g. G+1)"
+        <input className="form-control my-2" placeholder="Floors"
           value={planning.floors}
           onChange={(e) => setPlanning({ ...planning, floors: e.target.value })}
         />
 
-        <input
-          className="form-control my-2"
-          placeholder="Owner Name"
+        <input className="form-control my-2" placeholder="Owner Name"
           value={planning.ownerName}
           onChange={(e) => setPlanning({ ...planning, ownerName: e.target.value })}
         />
 
-        <input
-          className="form-control my-2"
-          placeholder="Engineer / Contractor"
+        <input className="form-control my-2" placeholder="Engineer / Contractor"
           value={planning.engineerName}
-          onChange={(e) =>
-            setPlanning({ ...planning, engineerName: e.target.value })
-          }
+          onChange={(e) => setPlanning({ ...planning, engineerName: e.target.value })}
         />
 
         <button className="btn btn-warning mt-2" onClick={saveProjectInfo}>
@@ -199,25 +174,19 @@ export default function PlanningManager() {
         </button>
       </div>
 
-      {/* Add Item */}
+      {/* Add Planning Items */}
       <div className="card p-3 mb-4 shadow-sm">
         <h5 className="fw-bold">Add New Planning Item</h5>
 
-        <input
-          className="form-control my-2"
-          placeholder="Title (e.g. RCC Work)"
+        <input className="form-control my-2" placeholder="Title"
           value={newItem.title}
           onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
         />
 
-        <textarea
-          className="form-control my-2"
+        <textarea className="form-control my-2" rows={3}
           placeholder="Description"
-          rows={4}
           value={newItem.description}
-          onChange={(e) =>
-            setNewItem({ ...newItem, description: e.target.value })
-          }
+          onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
         />
 
         <button className="btn btn-warning" onClick={savePlanningItem}>
@@ -225,17 +194,13 @@ export default function PlanningManager() {
         </button>
       </div>
 
-      {/* Items List */}
+      {/* Display Items */}
       <h5 className="fw-bold">📌 Saved Construction Planning</h5>
-      {planning.items?.map((item, index) => (
-        <div key={index} className="card p-3 mb-2 shadow-sm bg-light">
+      {planning.items.map((item, index) => (
+        <div key={index} className="card p-3 mb-2 shadow-sm">
           <h6 className="fw-bold">{item.title}</h6>
           <p>{item.description}</p>
-
-          <button
-            className="btn btn-danger btn-sm"
-            onClick={() => deleteItem(index)}
-          >
+          <button className="btn btn-danger btn-sm" onClick={() => deleteItem(index)}>
             Delete
           </button>
         </div>

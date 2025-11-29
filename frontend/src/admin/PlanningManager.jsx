@@ -35,9 +35,20 @@ export default function PlanningManager() {
   const fetchPlanning = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/planning`);
-      setPlanningList(res.data);
+
+      // 🛠 FIX: Convert single object → array
+      if (res.data) {
+        if (Array.isArray(res.data)) {
+          setPlanningList(res.data);
+        } else {
+          setPlanningList([res.data]);
+        }
+      } else {
+        setPlanningList([]);
+      }
     } catch (err) {
-      alert("Failed to fetch planning");
+      console.error(err);
+      setPlanningList([]);
     }
   };
 
@@ -150,6 +161,7 @@ export default function PlanningManager() {
       });
 
       y = doc.lastAutoTable.finalY + 20;
+
       if (sec.note) {
         doc.setFont("helvetica", "italic");
         doc.text(`Note: ${sec.note}`, 40, y);
@@ -166,6 +178,7 @@ export default function PlanningManager() {
 
       {/* ➕ Planning Form */}
       <div className="card p-3 mb-4 shadow-sm">
+
         <input
           className="form-control mb-2"
           placeholder="Project Type"
@@ -204,8 +217,9 @@ export default function PlanningManager() {
 
         <hr />
 
-        {/* ➕ Add Section */}
+        {/* Add Section */}
         <h6 className="fw-bold">Add Section</h6>
+
         <input
           className="form-control mb-2"
           placeholder="Section Title"
@@ -220,8 +234,9 @@ export default function PlanningManager() {
           onChange={(e) => setSection({ ...section, note: e.target.value })}
         />
 
-        {/* ➕ Add Item */}
+        {/* Add Item */}
         <h6 className="fw-bold mt-3">Add Item</h6>
+
         <div className="row g-2">
           <div className="col-md-10">
             <input
@@ -233,6 +248,7 @@ export default function PlanningManager() {
               }
             />
           </div>
+
           <div className="col-md-2">
             <button className="btn btn-sm btn-success w-100" onClick={addItem}>
               ➕ Add Item
@@ -266,12 +282,13 @@ export default function PlanningManager() {
           </button>
         </div>
 
-        {/* Show saved sections */}
         {newPlanning.sections.length > 0 && (
           <div className="mt-3">
             <h6>📋 Sections Added:</h6>
             {newPlanning.sections.map((s, i) => (
-              <p key={i}>{i + 1}. {s.title} ({s.items.length} items)</p>
+              <p key={i}>
+                {i + 1}. {s.title} ({s.items.length} items)
+              </p>
             ))}
           </div>
         )}
@@ -285,6 +302,7 @@ export default function PlanningManager() {
 
       {/* Saved Planning List */}
       <h5 className="mb-2">📑 Saved Planning</h5>
+
       {planningList.map((plan) => (
         <div
           key={plan._id}
@@ -301,6 +319,7 @@ export default function PlanningManager() {
             >
               📄 Download PDF
             </button>
+
             <button
               className="btn btn-sm btn-danger"
               onClick={() => deletePlanning(plan._id)}
@@ -310,6 +329,7 @@ export default function PlanningManager() {
           </div>
         </div>
       ))}
+
     </div>
   );
 }

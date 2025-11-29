@@ -59,7 +59,6 @@ router.delete("/item/:index", async (req, res) => {
   }
 });
 
-// DELETE entire planning
 router.delete("/", async (req, res) => {
   try {
     await Planning.deleteMany();
@@ -68,5 +67,6 @@ router.delete("/", async (req, res) => {
     res.status(500).send("Error deleting planning");
   }
 });
+
 
 export default router;

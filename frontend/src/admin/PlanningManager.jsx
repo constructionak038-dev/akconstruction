@@ -103,11 +103,9 @@ export default function PlanningManager() {
 
     let y = 160;
     doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
     doc.text("Project Information", 40, y);
     y += 20;
 
-    doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.text(`Project Type: ${projectType}`, 40, y); y += 20;
     doc.text(`Floors: ${floors}`, 40, y); y += 20;
@@ -137,15 +135,7 @@ export default function PlanningManager() {
     <div className="p-3">
       <h3 className="text-warning fw-bold mb-3">🏗 New Construction / Planning</h3>
 
-      {planning.items.length > 0 && (
-        <div className="mb-3">
-          <button className="btn btn-success" onClick={generatePDF}>
-            📄 Download Planning PDF
-          </button>
-        </div>
-      )}
-
-      {/* Project Info */}
+      {/* PROJECT INFO */}
       <div className="card p-3 mb-4 shadow-sm">
         <h5 className="fw-bold">Project Information</h5>
 
@@ -174,7 +164,7 @@ export default function PlanningManager() {
         </button>
       </div>
 
-      {/* Add Planning Items */}
+      {/* ADD NEW ITEM */}
       <div className="card p-3 mb-4 shadow-sm">
         <h5 className="fw-bold">Add New Planning Item</h5>
 
@@ -194,14 +184,51 @@ export default function PlanningManager() {
         </button>
       </div>
 
-      {/* Display Items */}
-      <h5 className="fw-bold">📌 Saved Construction Planning</h5>
+      {/* SAVED PLANNING CARD (Like Payment Schedule UI) */}
+      <h5 className="fw-bold mb-2">📘 Saved Construction Planning</h5>
+
+      {planning.items.length > 0 ? (
+        <div className="border rounded p-3 mb-3 bg-light shadow-sm">
+          <h6 className="fw-bold mb-1">{planning.projectType}</h6>
+          <p className="mb-1">Owner: {planning.ownerName}</p>
+          <p className="mb-1">Floors: {planning.floors}</p>
+
+          <div className="d-flex gap-2 mt-2">
+            <button className="btn btn-sm btn-success" onClick={generatePDF}>
+              📄 Download PDF
+            </button>
+
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={() => {
+                if (window.confirm("Delete entire planning?")) {
+                  axios.delete(`${API_URL}/api/planning`).then(() => {
+                    setPlanning({
+                      projectType: "",
+                      floors: "",
+                      ownerName: "",
+                      engineerName: "",
+                      items: [],
+                    });
+                  });
+                }
+              }}
+            >
+              🗑 Delete
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="text-muted">No planning saved yet.</p>
+      )}
+
+      {/* INDIVIDUAL ITEMS LIST */}
       {planning.items.map((item, index) => (
         <div key={index} className="card p-3 mb-2 shadow-sm">
           <h6 className="fw-bold">{item.title}</h6>
           <p>{item.description}</p>
           <button className="btn btn-danger btn-sm" onClick={() => deleteItem(index)}>
-            Delete
+            Delete Item
           </button>
         </div>
       ))}

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   fetchQuotationsApi,
   saveQuotationApi,
   deleteQuotationApi,
 } from "./services/quotationApi";
 import { generatePDF } from "./utils/generateQuotationPDF";
-import axios from "axios";
 
-// ✅ SAME AS BEFORE
 const API_URL =
   process.env.REACT_APP_API_URL ||
   "https://akconstruction-backend.onrender.com";
@@ -37,18 +36,18 @@ export default function QuotationManager() {
   const [editingQuotationId, setEditingQuotationId] = useState(null);
 
   useEffect(() => {
-    fetchQuotations();
+    loadQuotations();
   }, []);
 
-  const fetchQuotations = async () => {
+  const loadQuotations = async () => {
     const res = await fetchQuotationsApi();
     setQuotations(res.data);
   };
 
-  // ➕ / ✏️ ADD or UPDATE ITEM (UNCHANGED)
+  // ---------------- ADD / UPDATE ITEM ----------------
   const addItem = () => {
     if (!item.description || !item.rate) {
-      alert("⚠️ Please fill item details!");
+      alert("Fill item details");
       return;
     }
 
@@ -66,16 +65,15 @@ export default function QuotationManager() {
       rate: "",
       amount: "",
     });
-
     setEditIndex(null);
   };
 
-  const handleEditItem = (itemData, index) => {
-    setItem(itemData);
+  const handleEditItem = (it, index) => {
+    setItem(it);
     setEditIndex(index);
   };
 
-  // ✏️ LOAD SAVED QUOTATION INTO FORM (UNCHANGED)
+  // ---------------- EDIT QUOTATION ----------------
   const handleEditQuotation = (q) => {
     setNewQuotation({
       projectTitle: q.projectTitle,
@@ -87,10 +85,9 @@ export default function QuotationManager() {
       totalAmount: q.totalAmount,
     });
 
-    // ✅ IMPORTANT: MongoDB _id
     setEditingQuotationId(q._id);
-
     setEditIndex(null);
+
     setItem({
       description: "",
       unit: "",
@@ -102,20 +99,46 @@ export default function QuotationManager() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 💾 SAVE / UPDATE QUOTATION (UNCHANGED LOGIC)
+  // ---------------- CLONE QUOTATION ----------------
+  const handleCloneQuotation = (q) => {
+    setNewQuotation({
+      projectTitle: q.projectTitle + " (Copy)",
+      ownerName: q.ownerName,
+      areaStatement: q.areaStatement,
+      totalArea: q.totalArea,
+      note: q.note,
+      items: q.items || [],
+      totalAmount: q.totalAmount,
+    });
+
+    setEditingQuotationId(null); // 🔑 important
+    setEditIndex(null);
+
+    setItem({
+      description: "",
+      unit: "",
+      area: "",
+      rate: "",
+      amount: "",
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // ---------------- SAVE / UPDATE ----------------
   const saveQuotation = async () => {
     if (editingQuotationId) {
       await axios.put(
         `${API_URL}/api/quotations/${editingQuotationId}`,
         newQuotation
       );
-      alert("✅ Quotation updated successfully!");
+      alert("Quotation updated");
     } else {
       await saveQuotationApi(newQuotation);
-      alert("✅ Quotation added successfully!");
+      alert("Quotation saved");
     }
 
-    fetchQuotations();
+    loadQuotations();
 
     setNewQuotation({
       projectTitle: "",
@@ -131,73 +154,38 @@ export default function QuotationManager() {
   };
 
   const deleteQuotation = async (id) => {
-    if (!window.confirm("🗑️ Delete this quotation?")) return;
+    if (!window.confirm("Delete quotation?")) return;
     await deleteQuotationApi(id);
-    fetchQuotations();
+    loadQuotations();
   };
 
   return (
     <div>
       <h3 className="text-warning mb-3">📄 Quotation Management</h3>
 
-      {/* ADD QUOTATION FORM — SAME AS BEFORE */}
+      {/* FORM */}
       <div className="card p-3 mb-4 shadow-sm">
         <div className="row">
-          <div className="col-md-6 mb-2">
-            <input
-              className="form-control"
-              placeholder="Project Title"
-              value={newQuotation.projectTitle}
-              onChange={(e) =>
-                setNewQuotation({
-                  ...newQuotation,
-                  projectTitle: e.target.value,
-                })
-              }
-            />
-          </div>
-
-          <div className="col-md-6 mb-2">
-            <input
-              className="form-control"
-              placeholder="Owner Name"
-              value={newQuotation.ownerName}
-              onChange={(e) =>
-                setNewQuotation({
-                  ...newQuotation,
-                  ownerName: e.target.value,
-                })
-              }
-            />
-          </div>
-
-          <div className="col-md-6 mb-2">
-            <input
-              className="form-control"
-              placeholder="Area Statement"
-              value={newQuotation.areaStatement}
-              onChange={(e) =>
-                setNewQuotation({
-                  ...newQuotation,
-                  areaStatement: e.target.value,
-                })
-              }
-            />
-          </div>
-
-          <div className="col-md-6 mb-2">
-            <input
-              className="form-control"
-              placeholder="Total Area"
-              value={newQuotation.totalArea}
-              onChange={(e) =>
-                setNewQuotation({
-                  ...newQuotation,
-                  totalArea: e.target.value,
-                })
-              }
-            />
-          </div>
+          {[
+            ["Project Title", "projectTitle"],
+            ["Owner Name", "ownerName"],
+            ["Area Statement", "areaStatement"],
+            ["Total Area", "totalArea"],
+          ].map(([ph, key]) => (
+            <div className="col-md-6 mb-2" key={key}>
+              <input
+                className="form-control"
+                placeholder={ph}
+                value={newQuotation[key]}
+                onChange={(e) =>
+                  setNewQuotation({
+                    ...newQuotation,
+                    [key]: e.target.value,
+                  })
+                }
+              />
+            </div>
+          ))}
 
           <div className="col-12 mb-3">
             <textarea
@@ -206,70 +194,27 @@ export default function QuotationManager() {
               rows="2"
               value={newQuotation.note}
               onChange={(e) =>
-                setNewQuotation({
-                  ...newQuotation,
-                  note: e.target.value,
-                })
+                setNewQuotation({ ...newQuotation, note: e.target.value })
               }
             />
           </div>
         </div>
 
-        {/* ADD / EDIT ITEM */}
-        <h6 className="mt-3 fw-bold">
-          {editIndex !== null ? "Edit Item" : "Add Item"}
-        </h6>
-
+        {/* ITEM FORM */}
+        <h6 className="fw-bold">Add Item</h6>
         <div className="row g-2">
-          <div className="col-md-3">
-            <input
-              className="form-control"
-              placeholder="Description"
-              value={item.description}
-              onChange={(e) =>
-                setItem({ ...item, description: e.target.value })
-              }
-            />
-          </div>
+          {["description", "unit", "area", "rate", "amount"].map((f) => (
+            <div className="col-md-2" key={f}>
+              <input
+                className="form-control"
+                placeholder={f}
+                value={item[f]}
+                onChange={(e) => setItem({ ...item, [f]: e.target.value })}
+              />
+            </div>
+          ))}
 
           <div className="col-md-2">
-            <input
-              className="form-control"
-              placeholder="Unit"
-              value={item.unit}
-              onChange={(e) => setItem({ ...item, unit: e.target.value })}
-            />
-          </div>
-
-          <div className="col-md-2">
-            <input
-              className="form-control"
-              placeholder="Area"
-              value={item.area}
-              onChange={(e) => setItem({ ...item, area: e.target.value })}
-            />
-          </div>
-
-          <div className="col-md-2">
-            <input
-              className="form-control"
-              placeholder="Rate"
-              value={item.rate}
-              onChange={(e) => setItem({ ...item, rate: e.target.value })}
-            />
-          </div>
-
-          <div className="col-md-2">
-            <input
-              className="form-control"
-              placeholder="Amount"
-              value={item.amount}
-              onChange={(e) => setItem({ ...item, amount: e.target.value })}
-            />
-          </div>
-
-          {/* ✅ FIX 1: type="button" */}
-          <div className="col-md-1">
             <button
               type="button"
               onClick={addItem}
@@ -318,7 +263,6 @@ export default function QuotationManager() {
           </table>
         )}
 
-        {/* ✅ FIX 2: type="button" */}
         <div className="text-end mt-3">
           <input
             className="form-control w-25 d-inline"
@@ -342,16 +286,13 @@ export default function QuotationManager() {
       </div>
 
       {/* SAVED QUOTATIONS */}
-      <h5 className="mb-2">📜 Saved Quotations</h5>
+      <h5>📜 Saved Quotations</h5>
 
       {quotations.map((q) => (
-        <div
-          key={q._id}
-          className="border rounded p-3 mb-3 shadow-sm bg-light"
-        >
-          <h6 className="fw-bold mb-1">{q.projectTitle}</h6>
-          <p className="mb-1">Owner: {q.ownerName}</p>
-          <p className="mb-1">Total: Rs. {q.totalAmount}</p>
+        <div key={q._id} className="border p-3 mb-2 bg-light">
+          <h6>{q.projectTitle}</h6>
+          <p>Owner: {q.ownerName}</p>
+          <p>Total: {q.totalAmount}</p>
 
           <div className="d-flex gap-2">
             <button
@@ -359,7 +300,7 @@ export default function QuotationManager() {
               onClick={() => generatePDF(q)}
               className="btn btn-sm btn-success"
             >
-              📄 Download PDF
+              PDF
             </button>
 
             <button
@@ -368,6 +309,14 @@ export default function QuotationManager() {
               className="btn btn-sm btn-primary"
             >
               ✏️ Edit
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleCloneQuotation(q)}
+              className="btn btn-sm btn-secondary"
+            >
+              📋 Clone
             </button>
 
             <button

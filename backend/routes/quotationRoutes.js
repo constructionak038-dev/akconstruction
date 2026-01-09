@@ -9,7 +9,6 @@ router.get("/", async (req, res) => {
     const quotations = await Quotation.find().sort({ createdAt: -1 });
     res.json(quotations);
   } catch (error) {
-    console.error("❌ Error fetching quotations:", error);
     res.status(500).json({ message: "Error fetching quotations" });
   }
 });
@@ -19,10 +18,9 @@ router.post("/", async (req, res) => {
   try {
     const quotation = new Quotation(req.body);
     await quotation.save();
-    res.json({ message: "✅ Quotation added successfully", quotation });
+    res.json({ message: "Quotation added", quotation });
   } catch (error) {
-    console.error("❌ Error adding quotation:", error);
-    res.status(500).json({ message: "Error adding quotation", error });
+    res.status(500).json({ message: "Error adding quotation" });
   }
 });
 
@@ -30,10 +28,31 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     await Quotation.findByIdAndDelete(req.params.id);
-    res.json({ message: "✅ Quotation deleted successfully" });
+    res.json({ message: "Quotation deleted" });
   } catch (error) {
-    console.error("❌ Error deleting quotation:", error);
     res.status(500).json({ message: "Error deleting quotation" });
+  }
+});
+
+// ✏️ Update quotation (IMPORTANT)
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedQuotation = await Quotation.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updatedQuotation) {
+      return res.status(404).json({ message: "Quotation not found" });
+    }
+
+    res.json({
+      message: "Quotation updated",
+      quotation: updatedQuotation,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating quotation" });
   }
 });
 
